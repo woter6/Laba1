@@ -1,0 +1,82 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Task3_Tree
+{
+    public class TreeNode<T>
+    {
+        public T Value { get; }
+        public List<TreeNode<T>> Children { get; }
+
+        public TreeNode(T value)
+        {
+            Value = value;
+            Children = new List<TreeNode<T>>();
+        }
+
+        public void AddChild(TreeNode<T> child)
+        {
+            Children.Add(child);
+        }
+
+        public void PrintTree()
+        {
+            PrintTree(0);
+        }
+
+        private void PrintTree(int level)
+        {
+            Console.WriteLine(new string(' ', level * 4) + Value);
+
+            foreach (var child in Children)
+            {
+                child.PrintTree(level + 1);
+            }
+        }
+    }
+
+    internal class Program
+    {
+        static void Main()
+        {
+            Console.OutputEncoding = Encoding.UTF8;
+            Console.InputEncoding = Encoding.UTF8;
+
+            Console.WriteLine("Задание 3. Простое дерево");
+            Console.WriteLine("-------------------------");
+
+            TreeNode<string> root = new TreeNode<string>("Главный узел");
+
+            TreeNode<string> child1 = new TreeNode<string>("Первый потомок");
+            TreeNode<string> child2 = new TreeNode<string>("Второй потомок");
+            TreeNode<string> child3 = new TreeNode<string>("Третий потомок");
+
+            TreeNode<string> child1_1 = new TreeNode<string>("Потомок 1.1");
+            TreeNode<string> child1_2 = new TreeNode<string>("Потомок 1.2");
+
+            TreeNode<string> child2_1 = new TreeNode<string>("Потомок 2.1");
+
+            TreeNode<string> child1_1_1 = new TreeNode<string>("Потомок 1.1.1");
+
+            root.AddChild(child1);
+            root.AddChild(child2);
+            root.AddChild(child3);
+
+            child1.AddChild(child1_1);
+            child1.AddChild(child1_2);
+
+            child2.AddChild(child2_1);
+
+            child1_1.AddChild(child1_1_1);
+
+            Console.WriteLine("\nВывод всех узлов дерева:");
+            root.PrintTree();
+
+            Console.WriteLine("\nРабота программы завершена.");
+        }
+    }
+}
+
+
+

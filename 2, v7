@@ -1,0 +1,210 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Task2_Visitor
+{
+    public interface IDocumentElement
+    {
+        void Accept(IDocumentVisitor visitor);
+    }
+
+    public class Paragraph : IDocumentElement
+    {
+        public string Text { get; }
+
+        public Paragraph(string text)
+        {
+            Text = text;
+        }
+
+        public void Accept(IDocumentVisitor visitor)
+        {
+            visitor.VisitParagraph(this);
+        }
+    }
+
+    public class Image : IDocumentElement
+    {
+        public string Source { get; }
+        public string AltText { get; }
+
+        public Image(string source, string altText)
+        {
+            Source = source;
+            AltText = altText;
+        }
+
+        public void Accept(IDocumentVisitor visitor)
+        {
+            visitor.VisitImage(this);
+        }
+    }
+
+    public class Table : IDocumentElement
+    {
+        public List<List<string>> Rows { get; }
+
+        public Table(List<List<string>> rows)
+        {
+            Rows = rows;
+        }
+
+        public void Accept(IDocumentVisitor visitor)
+        {
+            visitor.VisitTable(this);
+        }
+    }
+
+    public interface IDocumentVisitor
+    {
+        void VisitParagraph(Paragraph paragraph);
+        void VisitImage(Image image);
+        void VisitTable(Table table);
+        string GetResult();
+    }
+
+    public class HtmlExportVisitor : IDocumentVisitor
+    {
+        private readonly StringBuilder _result = new StringBuilder();
+
+        public void VisitParagraph(Paragraph paragraph)
+        {
+            _result.AppendLine($"<p>{paragraph.Text}</p>");
+        }
+
+        public void VisitImage(Image image)
+        {
+            _result.AppendLine($"<img src=\"{image.Source}\" alt=\"{image.AltText}\">");
+        }
+
+        public void VisitTable(Table table)
+        {
+            _result.AppendLine("<table>");
+
+            foreach (var row in table.Rows)
+            {
+                _result.AppendLine("  <tr>");
+
+                foreach (var cell in row)
+                {
+                    _result.AppendLine($"    <td>{cell}</td>");
+                }
+
+                _result.AppendLine("  </tr>");
+            }
+
+            _result.AppendLine("</table>");
+        }
+
+        public string GetResult()
+        {
+            return _result.ToString();
+        }
+    }
+
+    public class MarkdownExportVisitor : IDocumentVisitor
+    {
+        private readonly StringBuilder _result = new StringBuilder();
+
+        public void VisitParagraph(Paragraph paragraph)
+        {
+            _result.AppendLine(paragraph.Text);
+            _result.AppendLine();
+        }
+
+        public void VisitImage(Image image)
+        {
+            _result.AppendLine($"![{image.AltText}]({image.Source})");
+            _result.AppendLine();
+        }
+
+        public void VisitTable(Table table)
+        {
+            if (table.Rows.Count == 0)
+                return;
+
+            var header = table.Rows[0];
+
+            _result.AppendLine("| " + string.Join(" | ", header) + " |");
+            _result.AppendLine("| " + string.Join(" | ", CreateSeparator(header.Count)) + " |");
+
+            for (int i = 1; i < table.Rows.Count; i++)
+            {
+                _result.AppendLine("| " + string.Join(" | ", table.Rows[i]) + " |");
+            }
+
+            _result.AppendLine();
+        }
+
+        private List<string> CreateSeparator(int count)
+        {
+            List<string> separator = new List<string>();
+
+            for (int i = 0; i < count; i++)
+            {
+                separator.Add("---");
+            }
+
+            return separator;
+        }
+
+        public string GetResult()
+        {
+            return _result.ToString();
+        }
+    }
+
+    public class Document
+    {
+        private readonly List<IDocumentElement> _elements = new List<IDocumentElement>();
+
+        public void AddElement(IDocumentElement element)
+        {
+            _elements.Add(element);
+        }
+
+        public string Export(IDocumentVisitor visitor)
+        {
+            foreach (var element in _elements)
+            {
+                element.Accept(visitor);
+            }
+
+            return visitor.GetResult();
+        }
+    }
+
+    internal class Program
+    {
+        static void Main()
+        {
+            Console.OutputEncoding = Encoding.UTF8;
+            Console.InputEncoding = Encoding.UTF8;
+
+            Console.WriteLine("Задание 2. Вариант 7. Паттерн Визитор");
+            Console.WriteLine("-------------------------------------");
+
+            Document document = new Document();
+
+            document.AddElement(new Paragraph("Это первый абзац документа."));
+            document.AddElement(new Image("photo.png", "Фотография"));
+            document.AddElement(new Table(new List<List<string>>
+            {
+                new List<string> { "Имя", "Возраст", "Город" },
+                new List<string> { "Анна", "20", "Москва" },
+                new List<string> { "Иван", "22", "Казань" }
+            }));
+            document.AddElement(new Paragraph("Это последний абзац документа."));
+
+            Console.WriteLine("\nЭкспорт документа в HTML:");
+            Console.WriteLine(document.Export(new HtmlExportVisitor()));
+
+            Console.WriteLine("\nЭкспорт документа в Markdown:");
+            Console.WriteLine(document.Export(new MarkdownExportVisitor()));
+
+            Console.WriteLine("Работа программы завершена.");
+        }
+    }
+}
+
